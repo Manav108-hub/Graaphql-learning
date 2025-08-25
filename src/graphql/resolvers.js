@@ -45,7 +45,7 @@ export const resolvers = {
       console.log("=== Registration attempt ===");
       console.log("Input received:", input);
       console.log("JWT_SECRET exists:", !!process.env.JWT_SECRET);
-      
+
       const { username, email, password } = input;
 
       // Validate input
@@ -69,7 +69,7 @@ export const resolvers = {
         console.log("Creating new user...");
         const user = await User.createUser(username, email, password);
         console.log("User created, generating token...");
-        
+
         const token = jwtPass(user.id);
         console.log("Token generated successfully");
 
@@ -82,7 +82,7 @@ export const resolvers = {
             created_at: user.created_at || new Date().toISOString(),
           },
         };
-        
+
         console.log("Registration successful");
         return response;
       } catch (error) {
@@ -98,9 +98,11 @@ export const resolvers = {
         }
 
         // Handle SQLite constraint errors
-        if (error.code === "SQLITE_CONSTRAINT_UNIQUE" || 
-            error.code === "SQLITE_CONSTRAINT" ||
-            error.message.includes("UNIQUE constraint failed")) {
+        if (
+          error.code === "SQLITE_CONSTRAINT_UNIQUE" ||
+          error.code === "SQLITE_CONSTRAINT" ||
+          error.message.includes("UNIQUE constraint failed")
+        ) {
           if (error.message.includes("email")) {
             throw new GraphQLError("Email already exists", {
               extensions: { code: "BAD_USER_INPUT" },
@@ -117,7 +119,10 @@ export const resolvers = {
         }
 
         // Handle JWT errors
-        if (error.message.includes("JWT_SECRET") || error.message.includes("secretOrPrivateKey")) {
+        if (
+          error.message.includes("JWT_SECRET") ||
+          error.message.includes("secretOrPrivateKey")
+        ) {
           throw new GraphQLError("Server configuration error", {
             extensions: { code: "INTERNAL_ERROR" },
           });
@@ -132,7 +137,7 @@ export const resolvers = {
     login: async (parent, { input }) => {
       console.log("=== Login attempt ===");
       console.log("Input received:", { email: input.email }); // Don't log password
-      
+
       const { email, password } = input;
 
       try {
@@ -147,12 +152,12 @@ export const resolvers = {
         console.log("Generating token for user:", user.id);
         const token = jwtPass(user.id);
         console.log("Login successful");
-        
+
         return { user, token };
       } catch (error) {
         console.error("=== Login Error ===");
         console.error("Error:", error);
-        
+
         // If it's already a GraphQLError, re-throw it
         if (error instanceof GraphQLError) {
           throw error;
@@ -165,7 +170,13 @@ export const resolvers = {
     },
 
     createTodo: async (parent, { input }, context) => {
+      console.log("=== Create Todo Debug ===");
+      console.log("Context received:", context);
+      console.log("Context.user:", context.user);
+      console.log("Input:", input);
+
       if (!context.user) {
+        console.log("No user in context - authentication failed");
         throw new GraphQLError("Not Authenticated", {
           extensions: { code: "UNAUTHENTICATED" },
         });
@@ -173,11 +184,24 @@ export const resolvers = {
 
       const { title, description } = input;
 
+      if (!title) {
+        throw new GraphQLError("Title is required", {
+          extensions: { code: "BAD_USER_INPUT" },
+        });
+      }
+
       try {
-        return await Todo.createTodo(title, description, context.user.userId);
+        console.log("Creating todo for user:", context.user.userId);
+        const todo = await Todo.createTodo(
+          title,
+          description,
+          context.user.userId
+        );
+        console.log("Todo created successfully:", todo);
+        return todo;
       } catch (error) {
         console.error("Create todo error:", error);
-        throw new GraphQLError("Failed to create todo", {
+        throw new GraphQLError(`Failed to create todo: ${error.message}`, {
           extensions: { code: "INTERNAL_ERROR" },
         });
       }
