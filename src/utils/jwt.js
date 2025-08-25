@@ -1,15 +1,26 @@
-import { jwt } from  "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
-const jwtToken = process.env.JWT_PASSWORD;
+export const jwtPass = (userId) => {
+  // Make sure you have JWT_SECRET in your .env file
+  const secret = process.env.JWT_SECRET;
+  
+  if (!secret) {
+    throw new Error("JWT_SECRET environment variable is not set");
+  }
+  
+  return jwt.sign({ userId }, secret, { expiresIn: "24h" });
+};
 
-export const jwtPass =  (userId) => {
-    return jwt.sign({userId} , jwtToken , { expiresIn : "7d" });
-}
-
-export const verifyToken =  (token) => {
-    try {
-        return jwt.verify(token , jwtToken);
-    }catch (err) {
-        throw new err ("Invalid or expired token"); 
-    }
-}
+export const verifyJWT = (token) => {
+  const secret = process.env.JWT_SECRET;
+  
+  if (!secret) {
+    throw new Error("JWT_SECRET environment variable is not set");
+  }
+  
+  try {
+    return jwt.verify(token, secret);
+  } catch (error) {
+    throw new Error("Invalid token");
+  }
+};

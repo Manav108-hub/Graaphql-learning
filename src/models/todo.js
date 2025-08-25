@@ -1,5 +1,5 @@
-import { ERROR } from "sqlite3";
-import { getDatabase } from "../database/connect";
+// import { ERROR } from "sqlite3";
+import { getDatabase } from "../database/connect.js";
 
 export class Todo {
   static async create(title, descriptiom, userId) {

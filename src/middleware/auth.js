@@ -1,4 +1,4 @@
-import { verifyToken } from "../utils/jwt";
+import { verifyJWT } from "../utils/jwt.js";
 
 export const getAuthContext = ({ req }) => {
   let user = null;
@@ -7,7 +7,7 @@ export const getAuthContext = ({ req }) => {
     const authheader = req.headers.authorization;
     if (authheader) {
       const token = authheader.replace("Bearer ", "");
-      user, verifyToken(token);
+      user = verifyJWT(token); // ✅ Fixed: was "user, verifyJWT(token);"
     }
   } catch (error) {
     console.log("Invalid token : " + error.message);
